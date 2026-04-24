@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: fraud-service
+  labels:
+    app: fraud-service
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: fraud-service
+  template:
+    metadata:
+      labels:
+        app: fraud-service
+    spec:
+      containers:
+      - name: fraud-service
+        image: YOUR_ACR_NAME.azurecr.io/fraud-service:latest
+        ports:
+        - containerPort: 8003
+        envFrom:
+        - secretRef:
+            name: banking-secrets
+        resources:
+          requests:
+            memory: "128Mi"
+            cpu: "100m"
+          limits:
+            memory: "256Mi"
+            cpu: "250m"
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8003
+          initialDelaySeconds: 30
+          periodSeconds: 10
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: fraud-service
+spec:
+  selector:
+    app: fraud-service
+  ports:
+  - port: 80
+    targetPort: 8003
+  type: ClusterIP
