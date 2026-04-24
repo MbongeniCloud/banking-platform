@@ -1,0 +1,17 @@
+# Secrets
+infra/k8s/secrets.yaml
+*.env
+.env
+
+# Python
+__pycache__/
+*.pyc
+*.pyo
+.venv/
+venv/
+
+# Terraform
+*.tfstate
+*.tfstate.backup
+.terraform/
+*.tfvars
