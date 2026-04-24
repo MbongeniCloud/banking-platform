@@ -1,0 +1,4 @@
+env:
+  ACR_NAME: ${{ secrets.ACR_NAME }}
+  AKS_CLUSTER: ${{ secrets.AKS_CLUSTER_NAME }}
+  RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
