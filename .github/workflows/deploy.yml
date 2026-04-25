@@ -1,4 +1,54 @@
+name: Build and Deploy to AKS
+
+on:
+  push:
+    branches: [main]
+
 env:
   ACR_NAME: ${{ secrets.ACR_NAME }}
   AKS_CLUSTER: ${{ secrets.AKS_CLUSTER_NAME }}
   RESOURCE_GROUP: ${{ secrets.AZURE_RESOURCE_GROUP }}
+
+jobs:
+  build-and-deploy:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v4
+
+    - name: Login to Azure
+      uses: azure/login@v1
+      with:
+        creds: ${{ secrets.AZURE_CREDENTIALS }}
+
+    - name: Login to ACR
+      run: az acr login --name ${{ env.ACR_NAME }}
+
+    - name: Build and push account-service
+      run: |
+        docker build -t ${{ env.ACR_NAME }}.azurecr.io/account-service:${{ github.sha }} \
+          -f services/account-service/Dockerfile services/account-service
+        docker push ${{ env.ACR_NAME }}.azurecr.io/account-service:${{ github.sha }}
+
+    - name: Build and push transaction-service
+      run: |
+        docker build -t ${{ env.ACR_NAME }}.azurecr.io/transaction-service:${{ github.sha }} \
+          -f services/transaction-service/Dockerfile services/transaction-service
+        docker push ${{ env.ACR_NAME }}.azurecr.io/transaction-service:${{ github.sha }}
+
+    - name: Build and push fraud-service
+      run: |
+        docker build -t ${{ env.ACR_NAME }}.azurecr.io/fraud-service:${{ github.sha }} \
+          -f services/fraud-service/Dockerfile services/fraud-service
+        docker push ${{ env.ACR_NAME }}.azurecr.io/fraud-service:${{ github.sha }}
+
+    - name: Set AKS context
+      run: az aks get-credentials --resource-group ${{ env.RESOURCE_GROUP }} --name ${{ env.AKS_CLUSTER }}
+
+    - name: Deploy to AKS
+      run: |
+        kubectl apply -f infra/k8s/account-service.yaml
+        kubectl apply -f infra/k8s/transaction-service.yaml
+        kubectl apply -f infra/k8s/fraud-service.yaml
+        kubectl set image deployment/account-service account-service=${{ env.ACR_NAME }}.azurecr.io/account-service:${{ github.sha }}
+        kubectl set image deployment/transaction-service transaction-service=${{ env.ACR_NAME }}.azurecr.io/transaction-service:${{ github.sha }}
+        kubectl set image deployment/fraud-service fraud-service=${{ env.ACR_NAME }}.azurecr.io/fraud-service:${{ github.sha }}
