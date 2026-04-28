@@ -230,7 +230,7 @@ interviews and system design rounds:
 
 ## Author
 
-Mbongeni — cloud and backend engineer focused on building systems that are 
+Mbongeni — cloud engineer focused on building systems that are 
 observable, resilient, and straightforward to reason about.
 
 GitHub: github.com/MbongeniCloud
