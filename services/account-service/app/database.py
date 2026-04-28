@@ -1,20 +1,22 @@
 import os
-import aioodbc
-from typing import AsyncGenerator
+import pymssql
 
-CONNECTION_STRING = os.getenv("SQL_CONNECTION_STRING")
+SERVER = os.getenv("SQL_SERVER")
+DATABASE = os.getenv("SQL_DATABASE", "banking")
+USERNAME = os.getenv("SQL_USERNAME")
+PASSWORD = os.getenv("SQL_PASSWORD")
 
-async def get_connection() -> AsyncGenerator:
-    conn = await aioodbc.connect(dsn=CONNECTION_STRING)
+async def get_connection():
+    conn = pymssql.connect(SERVER, USERNAME, PASSWORD, DATABASE)
     try:
         yield conn
     finally:
-        await conn.close()
+        conn.close()
 
 async def init_db():
-    conn = await aioodbc.connect(dsn=CONNECTION_STRING)
-    cursor = await conn.cursor()
-    await cursor.execute("""
+    conn = pymssql.connect(SERVER, USERNAME, PASSWORD, DATABASE)
+    cursor = conn.cursor()
+    cursor.execute("""
         IF NOT EXISTS (SELECT * FROM sysobjects WHERE name='accounts' AND xtype='U')
         CREATE TABLE accounts (
             id VARCHAR(36) PRIMARY KEY,
@@ -27,6 +29,6 @@ async def init_db():
             created_at DATETIME2 DEFAULT GETUTCDATE()
         )
     """)
-    await conn.commit()
-    await cursor.close()
-    await conn.close()
+    conn.commit()
+    cursor.close()
+    conn.close()
