@@ -3,6 +3,7 @@ uvicorn==0.29.0
 pydantic==2.7.0
 azure-cosmos==4.6.0
 azure-servicebus==7.12.1
+aiohttp==3.9.5
 opencensus-ext-azure==1.1.13
 opencensus==0.11.4
 python-dotenv==1.0.1
