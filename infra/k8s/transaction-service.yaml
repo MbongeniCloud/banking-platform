@@ -15,26 +15,32 @@ spec:
         app: transaction-service
     spec:
       containers:
-      - name: transaction-service
-        image: YOUR_ACR_NAME.azurecr.io/transaction-service:latest
-        ports:
-        - containerPort: 8002
-        envFrom:
-        - secretRef:
-            name: banking-secrets
-        resources:
-          requests:
-            memory: "256Mi"
-            cpu: "250m"
-          limits:
-            memory: "512Mi"
-            cpu: "500m"
-        livenessProbe:
-          httpGet:
-            path: /health
-            port: 8002
-          initialDelaySeconds: 30
-          periodSeconds: 10
+        - image: bankingplatformacr.azurecr.io/transaction-service:latest
+          name: transaction-service
+          ports:
+            - containerPort: 8002
+          envFrom:
+            - secretRef:
+                name: banking-secrets
+          env:
+            - name: APPLICATIONINSIGHTS_CONNECTION_STRING
+              valueFrom:
+                secretKeyRef:
+                  name: app-insights-secret
+                  key: APPLICATIONINSIGHTS_CONNECTION_STRING
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "250m"
+            limits:
+              memory: "512Mi"
+              cpu: "500m"
+          livenessProbe:
+            httpGet:
+              path: /health
+              port: 8002
+            initialDelaySeconds: 30
+            periodSeconds: 10
 ---
 apiVersion: v1
 kind: Service
@@ -44,6 +50,6 @@ spec:
   selector:
     app: transaction-service
   ports:
-  - port: 80
-    targetPort: 8002
+    - port: 80
+      targetPort: 8002
   type: ClusterIP
