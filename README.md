@@ -49,6 +49,17 @@ Observability: Azure Monitor + Application Insights (distributed tracing)
 CI/CD: GitHub Actions → Azure Container Registry → AKS rolling deploy
 ---
 
+## Live Endpoints
+
+The platform is publicly accessible via the API Gateway:
+
+| Service | Health Check | API Docs |
+|---|---|---|
+| Account Service | http://20.164.86.226/accounts/health | http://20.164.86.226/accounts/docs |
+| Transaction Service | http://20.164.86.226/transactions/health | http://20.164.86.226/transactions/docs |
+| Fraud Detection | http://20.164.86.226/fraud/health | — |
+
+
 ## Services
 
 ### Account Service
