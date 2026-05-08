@@ -239,6 +239,117 @@ interviews and system design rounds:
 
 ---
 
+## Visual Evidence
+
+### All Services Healthy — AKS Pods Running
+
+All six pods across three services are running with zero restarts after 9 days of continuous uptime.
+
+```
+NAME                                    READY   STATUS    RESTARTS   AGE
+account-service-67dcc567c5-fj94k        1/1     Running   0          9d
+account-service-67dcc567c5-fjf9h        1/1     Running   0          9d
+fraud-service-586c7948f6-5s5pw          1/1     Running   0          9d
+fraud-service-586c7948f6-cb7tt          1/1     Running   0          9d
+transaction-service-6cb67979f9-swwq6    1/1     Running   0          9d
+transaction-service-6cb67979f9-zhwl9    1/1     Running   0          9d
+```
+
+---
+
+### Live Health Endpoints — HTTP 200 OK
+
+All three services respond to health checks through the Nginx ingress gateway at `20.164.86.226`.
+
+**Account Service**
+```
+GET http://20.164.86.226/accounts/health
+StatusCode : 200
+Content    : {"status":"healthy","service":"account-service"}
+Date       : Fri, 08 May 2026 15:15:34 GMT
+```
+
+**Transaction Service**
+```
+GET http://20.164.86.226/transactions/health
+StatusCode : 200
+Content    : {"status":"healthy","service":"transaction-service"}
+Date       : Fri, 08 May 2026 15:15:37 GMT
+```
+
+**Fraud Detection Service**
+```
+GET http://20.164.86.226/fraud/health
+StatusCode : 200
+Content    : {"status":"healthy","service":"fraud-service"}
+Date       : Fri, 08 May 2026 15:16:36 GMT
+```
+
+---
+
+### Distributed Tracing — Azure Application Insights
+
+Application Insights (`banking-insights`, South Africa North) is wired into all three services via OpenCensus. Traces are collected on every HTTP request and shipped to Azure in real time.
+
+**Transaction Search — 51,310 traces recorded**
+
+The search view shows 51.31k traces matching 51.84k spans, logs, and events over a 24-hour window between `2026/05/07 07:50:05` and `2026/05/08 07:50:05`. Each trace captures the request path, duration, call status, and role instance, confirming that all three services are reporting telemetry independently.
+
+**Application Insights Overview**
+
+The overview dashboard confirms:
+- Resource group: `rg-banking-platform`
+- Location: South Africa North
+- Instrumentation Key: `6b702a59-84ec-4717-8bca-424d9a2fd53c`
+- Workspace: `managed-banking-insights-ws`
+- Failed requests, server response time, server requests, and availability graphs are all active and collecting data.
+
+---
+
+### Alerting — Three Production Alerts Configured
+
+Three metric alerts are active in Azure Monitor targeting the `banking-insights` Application Insights component:
+
+| Alert Name | Condition | Severity | Evaluation Frequency |
+|---|---|---|---|
+| failed-requests-alert | Failed requests > 5 in 5 minutes | Severity 1 | Every 1 minute |
+| high-latency-alert | Avg response time > 2000ms | Severity 2 | Every 1 minute |
+| availability-alert | Availability < 100% | Severity 1 | Every 1 minute |
+
+All alerts are enabled and scoped to the production resource group `rg-banking-platform`.
+
+---
+
+### CI/CD Pipeline — GitHub Actions
+
+The build and deploy pipeline runs on every push to `main`. It builds Docker images for all three services, pushes them to Azure Container Registry (`bankingplatformacr`), and applies the Kubernetes deployments to AKS (`banking-aks`).
+
+**Recent pipeline runs (all green):**
+
+| Run | Commit | Branch | Duration | Status |
+|---|---|---|---|---|
+| #15 | 80deb25 | main | — | Passed |
+| #14 | fa68acb | main | 2m 26s | Passed |
+| #13 | 436df22 | main | 2m 17s | Passed |
+| #12 | cc7b992 | main | 2m 17s | Passed |
+| #10 | f71c949 | main | 4m 53s | Passed |
+
+Pipeline: [https://github.com/MbongeniCloud/banking-platform/actions](https://github.com/MbongeniCloud/banking-platform/actions)
+
+---
+
+### Azure Resources — All Provisioned and Active
+
+| Resource | Name | Type | Location |
+|---|---|---|---|
+| Kubernetes cluster | banking-aks | AKS | South Africa North |
+| Container registry | bankingplatformacr | ACR | South Africa North |
+| SQL Server | mbongenibanking-sql | Azure SQL | South Africa North |
+| Cosmos DB | mbongenibankingcosmos | Cosmos DB | South Africa North |
+| Service Bus | mbongenibankingbus | Azure Service Bus | South Africa North |
+| Monitoring | banking-insights | Application Insights | South Africa North |
+| Resource group | rg-banking-platform | Resource Group | South Africa North |
+
 ## Author
 
 Mbongeni — cloud engineer focused on building systems that are 
